@@ -51,7 +51,16 @@ public class SudokuSolverApp {
 		app.print();
 		app.populateSolutionGridWithStartingPosition();
 		app.printSolutionGrid();
+				
 		app.solve();
+	}
+
+	private void printValuesSet(Set<Integer> squareValues) {
+		for(Integer i : squareValues){
+			System.out.print(i.toString() + ", ");
+		}
+		System.out.println();
+		
 	}
 
 	private void printSolutionGrid() {
@@ -112,6 +121,7 @@ public class SudokuSolverApp {
 	}
 
 	void solve(){
+		//TODO not sure if I'll use these, but could use to optimize approach
 		int row = findRowWithMostNumbers();
 		System.out.println("Row with most numbers: " + row);
 		
@@ -121,6 +131,23 @@ public class SudokuSolverApp {
 		int square = findSquareWithMostNumbers();
 		
 		Grouping next = findNextBestCandidateGroupingForMatches(row, col, square);
+		
+		//iterate squares
+		for(int rowSquare=0; rowSquare<3; rowSquare++){
+			for(int colSquare=0; colSquare<3; colSquare++){
+				System.out.print("Square " + rowSquare + ", "
+						+ colSquare + ": ");
+				Set<Integer> squareValues = this.getValuesInSquare(rowSquare, colSquare);
+				this.printValuesSet(squareValues);
+				Set<Integer> missingValues = this.getMissingPotentialValues(squareValues);
+				System.out.print("Missing values: ");
+				this.printValuesSet(missingValues);
+				
+				//TODO insert missing values into every blank cell in this square
+				//TODO for each cell, remove any duplicates from same column
+				//TODO for each row, remove any duplicates from the same row
+			}
+		}
 		
 	}
 
@@ -145,15 +172,39 @@ public class SudokuSolverApp {
 			List<List<Integer>> currentRow = this.solutionGrid.get(rowOffset);
 			
 			//iterate 3 cells for current row
-			//TODO
+			for(int cellOffset=col*3; cellOffset < (col*3) + 3; cellOffset++){
+				List<Integer> cellContent = currentRow.get(cellOffset);
+				//only collect cells where we have a single (final) value,
+				//not a list of possible values
+				if(cellContent.size() == 1){
+					values.add(cellContent.get(0));
+				}
+			}
 		}
-		
-		
-				
 				
 		return values;
 	}
 	
+	Set<Integer> getValuesInRow(int row){
+		Set<Integer> values = new HashSet<>();
+		
+		//TODO
+		return values;
+	}
+	
+	Set<Integer> getValuesInCol(int col){
+		Set<Integer> values = new HashSet<>();
+		
+		//TODO
+		return values;
+	}
+	
+	Set<Integer> getMissingPotentialValues(Set<Integer> currentValues){
+		
+		Set<Integer> missingValues = new HashSet<>(SudokuSolverApp.allowedValues);
+		missingValues.removeAll(currentValues);
+		return missingValues;
+	}
 	
 	private Grouping findNextBestCandidateGroupingForMatches(int row, int col, int square) {
 		// TODO Auto-generated method stub
