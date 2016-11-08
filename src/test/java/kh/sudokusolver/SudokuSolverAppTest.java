@@ -28,7 +28,23 @@ public class SudokuSolverAppTest {
 		app.setSudokuGrid(this.sudokuGrid);
 	}
 	
-	
+	@Test
+	public void testGetSingleValuesInColumn_0(){
+	    this.app.populateSolutionGridWithStartingPosition();
+	    Set<Integer> values = this.app.getSingleValuesInColumn(0);
+	    Set<Integer> expectedValues = new HashSet<>();
+	    expectedValues.add(1);
+	    expectedValues.add(4);
+	    expectedValues.add(9);
+	    expectedValues.add(6);
+	    assertTrue(values.containsAll(expectedValues));
+	}
+
+   @Test
+    public void testGetSingleValuesInColumn_8(){
+        
+    }
+
 	@Test
 	public void testSquareColFromCol_0(){
 		int result = this.app.getSquareColFromCol(0);
