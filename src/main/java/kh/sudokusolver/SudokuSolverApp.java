@@ -1,10 +1,13 @@
 package kh.sudokusolver;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  * Sudoku solver.
@@ -14,15 +17,13 @@ import java.util.Set;
  */
 public class SudokuSolverApp {
 
-	enum Grouping {
-		row, column, square
-	}
+	private static Logger LOG = Logger.getLogger("SudokuSolverApp");
 
 	private static final Set<Integer> allowedValues = new HashSet<>(
 			Arrays.asList(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }));
 
 	// example grid to solve
-	private int[][] sudokuGrid = { { 0, 0, 0, 8, 1, 0, 6, 7, 0 }, { 0, 0, 7, 4, 9, 0, 2, 0, 8 },
+	private int[][] startingSudokuGrid = { { 0, 0, 0, 8, 1, 0, 6, 7, 0 }, { 0, 0, 7, 4, 9, 0, 2, 0, 8 },
 			{ 0, 6, 0, 0, 5, 0, 1, 0, 4 }, { 1, 0, 0, 0, 0, 3, 9, 0, 0 }, { 4, 0, 0, 0, 8, 0, 0, 0, 7 },
 			{ 0, 0, 6, 9, 0, 0, 0, 0, 3 }, { 9, 0, 2, 0, 3, 0, 0, 6, 0 }, { 6, 0, 1, 0, 7, 4, 3, 0, 0 },
 			{ 0, 3, 4, 0, 6, 9, 0, 0, 0 } };
@@ -33,38 +34,79 @@ public class SudokuSolverApp {
 	// ... }
 	private List<List<List<Integer>>> solutionGrid = new ArrayList<>();
 
-	boolean foundValuesOnLastPass = true;
-
 	public SudokuSolverApp() {
-	};
 
+		InputStream inputStream = SudokuSolverApp.class.getResourceAsStream("/logging.properties");
+		try {
+			LogManager.getLogManager().readConfiguration(inputStream);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	
 	public static void main(String[] args) {
 
 		SudokuSolverApp app = new SudokuSolverApp();
-		app.print();
+		app.printGridWithBorders();
+		
 		app.populateSolutionGridWithStartingPosition();
 		app.printSolutionGrid();
 
 		app.solve();
-
-		app.printSolutionGrid();
+		System.out.println("Complete!");
 	}
 
+	
 	private void printValuesSet(Set<Integer> squareValues) {
 		for (Integer i : squareValues) {
 			System.out.print(i.toString() + ", ");
 		}
 		System.out.println();
-
+		System.out.println();
 	}
 
+	
+	/**
+	 * Prints the puzzle grid with borders around each square.
+	 * 
+	 */
+	private void printGridWithBorders() {
+		for (int row = 0; row < 9; row++) {
+			for (int col = 0; col < 9; col++) {
+				int value = startingSudokuGrid[row][col];
+				System.out.print((value == 0 ? " " : value) + " ");
+				if (col == 2 || col == 5) {
+					System.out.print("| ");
+				}
+			}
+			if (row == 2 || row == 5) {
+				System.out.println("\n- - - + - - - + - - -");
+			} else {
+				System.out.println();
+			}
+		}
+	}
+	
+	
 	private void printSolutionGrid() {
 		for (List<List<Integer>> row : this.solutionGrid) {
 			for (List<Integer> currentCell : row) {
+				// full cell pad to accomodate 0..9
+				// int paddingSize = (9 - currentCell.size()) * 3;
+
+				// temp - reduced pad
+				int paddingSize = (5 - currentCell.size()) * 3;
+
 				System.out.print("{ ");
 				for (Integer i : currentCell) {
 					System.out.print(i.toString() + ", ");
 				}
+				for (int paddingCount = 0; paddingCount < paddingSize; paddingCount++) {
+					System.out.print(" ");
+				}
+
 				System.out.print(" },");
 			}
 			System.out.println();
@@ -78,7 +120,7 @@ public class SudokuSolverApp {
 
 			for (int col = 0; col < 9; col++) {
 				List<Integer> currentCellPossibleNumberList = new ArrayList<>();
-				int value = sudokuGrid[row][col];
+				int value = startingSudokuGrid[row][col];
 				// if we have starting number for cell, add it to solution grid,
 				// otherwise add an empty list for now - we'll come back and
 				// populate each empty list with possible numbers when we start
@@ -92,87 +134,184 @@ public class SudokuSolverApp {
 		}
 	}
 
+
 	/**
-	 * Prints the puzzle grid.
-	 * 
+	 * Solves the grid. Loops through squares first, inserting possible values into each
+	 * empty cell. Then iterates row by row removing single values from sets of guesses until 
+	 * unable to remove any values.
 	 */
-	private void print() {
-		for (int row = 0; row < 9; row++) {
-			for (int col = 0; col < 9; col++) {
-				int value = sudokuGrid[row][col];
-				System.out.print((value == 0 ? " " : value) + " ");
-				if (col == 2 || col == 5) {
-					System.out.print("| ");
-				}
-			}
-			if (row == 2 || row == 5) {
-				System.out.println("\n- - - + - - - + - - -");
-			} else {
-				System.out.println();
-			}
-
-		}
-
-	}
-
 	void solve() {
 
-		//---
-		// TODO not sure if I'll use these, but could use to optimize approach
-		int rowWithMostNumbers = findRowWithMostNumbers();
-		System.out.println("Row with most numbers: " + rowWithMostNumbers);
-
-		int colWithMostNumbers = findColumnWithMostNumbers();
-		System.out.println("Col with most numbers: " + colWithMostNumbers);
-
-		int square = findSquareWithMostNumbers();
-
-		Grouping next = findNextBestCandidateGroupingForMatches(colWithMostNumbers, colWithMostNumbers, square);
-		//---
-		
 		int passesThroughGridCount = 0;
-		
-		while (foundValuesOnLastPass) {
-			// iterate squares
-			for (int rowSquare = 0; rowSquare < 3; rowSquare++) {
-				for (int colSquare = 0; colSquare < 3; colSquare++) {
-					System.out.print("Square " + rowSquare + ", " + colSquare + ": ");
-					Set<Integer> squareValues = this.getValuesInSquare(rowSquare, colSquare);
-					this.printValuesSet(squareValues);
-					Set<Integer> missingValues = this.getMissingPotentialValues(squareValues);
-					System.out.print("Missing values: ");
-					this.printValuesSet(missingValues);
 
-					//insert missing values into every blank cell in this square
-					foundValuesOnLastPass = this.updateValuesInSquare(rowSquare, colSquare, new ArrayList<Integer>(missingValues));
+		// pass 1 - loop through squares and populate blank cells with lists of possible values
+		for (int rowSquare = 0; rowSquare < 3; rowSquare++) {
+			for (int colSquare = 0; colSquare < 3; colSquare++) {
+				System.out.print("Square " + rowSquare + ", " + colSquare + ": ");
+				Set<Integer> singleValuesInSquare = this.getSingleValuesInSquare(rowSquare, colSquare);
+				this.printValuesSet(singleValuesInSquare);
+
+				Set<Integer> missingValues = this.getMissingPotentialValues(singleValuesInSquare);
+				System.out.print("Missing values: ");
+				this.printValuesSet(missingValues);
+				// insert missing values into every blank cell in this square
+				this.updateValuesInSquare(rowSquare, colSquare, new ArrayList<Integer>(missingValues));
+			}
+		}
+
+		this.printSolutionGrid();
+		
+		// pass 2 - loop through individual cells and remove any invalid values
+		boolean solvedValuesOnAtLeastOnePass = true;
+		while (solvedValuesOnAtLeastOnePass) {
+			boolean replacedOnLastIteration = false;
+			for (int col = 0; col < 9; col++) {
+				for (int row = 0; row < 9; row++) {
+					boolean solvedValuesThisPass = this.removeSingleValuesFromCurrentGuesses(row, col);
+					if(solvedValuesThisPass){
+						replacedOnLastIteration = solvedValuesThisPass;
+					}
+				}
+				if(!replacedOnLastIteration){
+					solvedValuesOnAtLeastOnePass = false;
 				}
 			}
-			
-			//get set of all single (guessed) values for each column, and remove
-			//from any sets of guesses
-			Set<Integer> singleValues = new HashSet<Integer>();
-			for(int col = 0; col < 8; col++){
-				for(int row = 0; row < 8; row++){
-					Set<Integer> valuesInSameColumn = this.getValuesInColumn(col);
-					//if(values){
-					//	valuesInColumn.addAll(valuesInColumn);
+			passesThroughGridCount++;
+			this.printSolutionGrid();
+			System.out.println("Passes through grid: " + passesThroughGridCount);
+		}
+		
+	}
+
+	
+	private boolean removeSingleValuesFromCurrentGuesses(int row, int col) {
+		boolean valuesReplaced = false;
+
+		Set<Integer> singleValuesInRow = this.getSingleValuesInRow(row);
+		Set<Integer> singleValuesInCol = this.getSingleValuesInColumn(col);
+		Set<Integer> singleValuesInSquare = this.getSingleValuesInSquareByRowCol(row, col);
+		List<Integer> valuesInCell = this.getValueInCell(row, col);
+		//only replace if this cell currently has more than one guess
+		if(valuesInCell.size() > 1){
+			boolean valuesReplacedInRow = valuesInCell.removeAll(singleValuesInRow);
+			boolean valuesReplacedInCol = valuesInCell.removeAll(singleValuesInCol);
+			boolean valuesReplacedInSquare = valuesInCell.removeAll(singleValuesInSquare);
+	
+			valuesReplaced = valuesReplacedInRow || valuesReplacedInCol || valuesReplacedInSquare;
+			if (valuesReplaced) {
+				List<List<Integer>> valuesInRow = this.getValuesInRow(row);
+				valuesInRow.set(col, valuesInCell);
+				this.solutionGrid.set(row, valuesInRow);
+			}
+		}
+		return valuesReplaced;
+	}
+
+
+	boolean guessValuesInColumnBasedOnUniqueGuess() {
+		LOG.entering("SudokuSolverApp", "guessValuesInColumnBasedOnUniqueGuess");
+
+		boolean foundValues = false;
+
+		for (int col = 0; col < 9; col++) {
+			for (int row = 0; row < 9; row++) {
+
+				List<List<Integer>> valuesInRow = getValuesInRow(row);
+				List<Integer> valuesInCol = valuesInRow.get(col);
+
+				// compare each of the values in this set, if there's a guess in
+				// this column that is unique, we'll keep it as a solution
+				// only compare values in a column that already have more than
+				// one guess
+				if (valuesInCol.size() > 1) {
+
+					// for each of the current guesses in this column...
+					for (Integer currentGuess : valuesInCol) {
+
+						// ... iterate through each of the guesses in the other rows
+						int numberOfOccurrences = 0;
+						for (int currentRow = 0; currentRow < 9; currentRow++) {
+							List<List<Integer>> rowToCompare = getValuesInRow(currentRow);
+							List<Integer> valuesInColumnCell = rowToCompare.get(col);
+
+							// does value exist in this column cell?
+							if (currentRow != row && valuesInColumnCell.contains(currentGuess)) {
+								numberOfOccurrences++;
+							}
+						}
+
+						if (numberOfOccurrences == 1) {
+							System.out.println(".. guess only exists once, keeping in solution");
+							List<Integer> guessForThisCell = new ArrayList<>();
+							guessForThisCell.add(currentGuess);
+							valuesInRow.set(col, guessForThisCell);
+							foundValues = true;
+						}
 					}
 				}
 			}
-			
-			// TODO for each row, remove any duplicates from the same
-			// row
-
-			passesThroughGridCount++;
 		}
-		System.out.println("Passes through grid: " + passesThroughGridCount);
+		return foundValues;
 	}
 
-	private void insertMissingValuesIntoBlankCells(Set<Integer> missingValues, int rowSquare, int colSquare) {
-		// TODO Auto-generated method stub
-
+	
+	/**
+	 * Retrieves set of single values in a column.
+	 * 
+	 * @return
+	 */
+	Set<Integer> getSingleValuesInColumn(int col) {
+		Set<Integer> singleValues = new HashSet<Integer>();
+		for (int row = 0; row < 9; row++) {
+			List<List<Integer>> valuesInRow = getValuesInRow(row);
+			List<Integer> valuesInCell = valuesInRow.get(col);
+			if (valuesInCell.size() == 1) {
+				singleValues.addAll(valuesInCell);
+			}
+		}
+		return singleValues;
 	}
 
+	
+	/**
+	 * Retrieves set if single values in a row.
+	 * @param row
+	 * @return
+	 */
+	Set<Integer> getSingleValuesInRow(int row) {
+		Set<Integer> singleValues = new HashSet<Integer>();
+		List<List<Integer>> valuesInRow = getValuesInRow(row);
+		for (int col = 0; col < 9; col++) {
+			List<Integer> valuesInCol = valuesInRow.get(col);
+			if (valuesInCol.size() == 1) {
+				singleValues.addAll(valuesInCol);
+			}
+		}
+		return singleValues;
+	}
+
+	
+	/**
+	 * Removes values from every set of guesses in a column.
+	 * 
+	 * @param col
+	 * @param valuesToRemove
+	 * @return
+	 */
+	boolean removeGuessesInColumn(int col, Set<Integer> valuesToRemove) {
+		boolean valuesReplaced = false;
+		for (int row = 0; row < 8; row++) {
+			List<List<Integer>> valuesInRow = getValuesInRow(row);
+			List<Integer> valuesInCell = valuesInRow.get(col);
+			if (valuesInRow.size() > 1) {
+				valuesInCell.removeAll(valuesToRemove);
+				valuesReplaced = true;
+			}
+		}
+		return valuesReplaced;
+	}
+
+	
 	/**
 	 * Retrieves set of current values in a square, by iterating 3 rows from the
 	 * starting row, and 3 columns from the starting column.
@@ -184,12 +323,12 @@ public class SudokuSolverApp {
 	 * @param col
 	 * @return
 	 */
-	Set<Integer> getValuesInSquare(int row, int col) {
+	Set<Integer> getSingleValuesInSquare(int row, int col) {
 		Set<Integer> values = new HashSet<>();
 
 		// iterate 3 rows for square
 		for (int rowOffset = row * 3; rowOffset < (row * 3) + 3; rowOffset++) {
-			List<List<Integer>> currentRow = this.solutionGrid.get(rowOffset);
+			List<List<Integer>> currentRow = getValuesInRow(rowOffset);
 
 			// iterate 3 cells for current row
 			for (int cellOffset = col * 3; cellOffset < (col * 3) + 3; cellOffset++) {
@@ -205,62 +344,137 @@ public class SudokuSolverApp {
 		return values;
 	}
 
-	boolean updateValuesInSquare(int row, int col, List<Integer> newValues) {
-		Set<Integer> values = new HashSet<>();
-		boolean replacedValuesOnThisPass = false;
-		
-		// iterate 3 rows for square
-		for (int rowOffset = row * 3; rowOffset < (row * 3) + 3; rowOffset++) {
-			List<List<Integer>> currentRow = this.solutionGrid.get(rowOffset);
+	
+	/**
+	 * Updates empty values in a square. Checks for single values in the same
+	 * column first, then the same row, and removes them from the guessed
+	 * values.
+	 * 
+	 * @param squareRow
+	 * @param squareCol
+	 * @param missingValuesInSquare
+	 * @return
+	 */
+	boolean updateValuesInSquare(int squareRow, int squareCol, List<Integer> missingValuesInSquare) {
 
-			// iterate 3 cells for current row
-			for (int cellOffset = col * 3; cellOffset < (col * 3) + 3; cellOffset++) {
-				List<Integer> cellContent = currentRow.get(cellOffset);
+		boolean replacedValuesOnThisPass = false;
+
+		// iterate 3 rows for square
+		for (int row = squareRow * 3; row < (squareRow * 3) + 3; row++) {
+			List<List<Integer>> currentRow = getValuesInRow(row);
+
+			// get single values in same row
+			
+			Set<Integer> singleValuesInSameRow = this.getSingleValuesInRow(row);
+
+			// iterate 3 columns for current row of this square
+			for (int col = squareCol * 3; col < (squareCol * 3) + 3; col++) {
+								
+				List<Integer> cellContent = currentRow.get(col);
+
 				// if the current cell is empty, replace it with the possible
-				// list
+				// list of guesses
 				if (cellContent.size() == 0) {
-					currentRow.set(cellOffset, newValues);
+					
+					Set<Integer> guessesForThisCell = new HashSet<>(missingValuesInSquare);
+
+					//remove single values for the same row
+					guessesForThisCell.removeAll(singleValuesInSameRow);
+
+					// remove single values in same column
+					Set<Integer> singleValuesInSameColumn = this.getSingleValuesInColumn(col);
+					guessesForThisCell.removeAll(singleValuesInSameColumn);
+
+					currentRow.set(col, new ArrayList<>(guessesForThisCell));
+					
 					replacedValuesOnThisPass = true;
 				}
 			}
 		}
-		
 		return replacedValuesOnThisPass;
 	}
 
-	Set<Integer> getValuesInRow(int row) {
+	
+	private Set<Integer> getSingleValuesInSquareByRowCol(int row, int col) {
+		int squareRow = this.getSquareRowFromRow(row);
+		int squareCol = this.getSquareColFromCol(col);
+		Set<Integer> singleValuesInSquare = this.getSingleValuesInSquare(squareRow, squareCol);
+		return singleValuesInSquare;
+	}
+
+	
+	int getSquareColFromCol(int col) {
+		int squareCol = col / 3;
+		return squareCol;
+	}
+
+	
+	int getSquareRowFromRow(int row) {
+		int rowSquare = row / 3;
+		return rowSquare;
+	}
+
+	
+	List<Integer> getValueInCell(int row, int col) {
+		List<List<Integer>> valuesInRow = this.getValuesInRow(row);
+		return valuesInRow.get(col);
+	}	
+	
+	
+	List<List<Integer>> getValuesInRow(int row) {
+		List<List<Integer>> currentRow = this.solutionGrid.get(row);
+		return currentRow;
+	}
+
+	
+	Set<Integer> getValuesInRowAsSet(int row) {
 		Set<Integer> values = new HashSet<>();
 
-		List<List<Integer>> currentRow = this.solutionGrid.get(row);
-		
-		for(int col = 0; col < 8; col ++){
-			
+		List<List<Integer>> currentRow = getValuesInRow(row);
+
+		for (int col = 0; col < 8; col++) {
+
 			List<Integer> valuesForCell = currentRow.get(col);
 			values.addAll(valuesForCell);
 		}
-		
+
 		return values;
 	}
 
+	
 	/**
-	 * Retrieves a set of unique values for the specified column. Iterates through all rows to retrieve 
-	 * each value for that column from each row.
+	 * Retrieves a set of unique values for the specified column. Iterates
+	 * through all rows to retrieve each value for that column from each row.
 	 * 
 	 * @param col
 	 * @return
 	 */
-	Set<Integer> getValuesInColumn(int col) {
+	Set<Integer> getValuesInColumnAsSet(int col) {
 		Set<Integer> values = new HashSet<>();
 
-		for(int row = 0; row < 8; row ++){
-			List<List<Integer>> currentRow = this.solutionGrid.get(row);
+		for (int row = 0; row < 8; row++) {
+			List<List<Integer>> currentRow = getValuesInRow(row);
 			List<Integer> valuesForCell = currentRow.get(col);
 			values.addAll(valuesForCell);
 		}
-		
+
 		return values;
 	}
 
+	
+	List<List<Integer>> getValuesInColumn(int col) {
+		List<List<Integer>> values = new ArrayList<>();
+
+		for (int row = 0; row < 8; row++) {
+			List<List<Integer>> currentRow = getValuesInRow(row);
+			List<Integer> valuesForCell = currentRow.get(col);
+			values.add(valuesForCell);
+		}
+
+		return values;
+	}
+
+	
 	Set<Integer> getMissingPotentialValues(Set<Integer> currentValues) {
 
 		Set<Integer> missingValues = new HashSet<>(SudokuSolverApp.allowedValues);
@@ -268,82 +482,26 @@ public class SudokuSolverApp {
 		return missingValues;
 	}
 
-	private Grouping findNextBestCandidateGroupingForMatches(int row, int col, int square) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * Find column with most numbers as best candidate to start looking for
-	 * potential numbers for blanks.
-	 * 
-	 * @return
-	 */
-	private int findColumnWithMostNumbers() {
-		int result = 0;
-		int currentCount = 0;
-		int currentLargest = 0;
-
-		for (int col = 0; col < 9; col++) {
-
-			for (int row = 0; row < 9; row++) {
-				int currentValue = this.sudokuGrid[row][col];
-				if (currentValue > 0) {
-					currentCount++;
-				}
-			}
-
-			if (currentCount > currentLargest) {
-				result = col;
-				currentLargest = currentCount;
-
-			}
-			currentCount = 0;
-		}
-		return result;
-	}
-
-	private int findSquareWithMostNumbers() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * Find row with most numbers as best candidate to start looking for
-	 * potential numbers for blanks.
-	 * 
-	 * @return
-	 */
-	private int findRowWithMostNumbers() {
-		int result = 0;
-		int currentCount = 0;
-		int currentLargest = 0;
-
-		for (int row = 0; row < 9; row++) {
-			int values[] = this.sudokuGrid[row];
-
-			for (int col = 0; col < 9; col++) {
-				if (values[col] > 0) {
-					currentCount++;
-				}
-			}
-
-			if (currentCount > currentLargest) {
-				result = row;
-				currentLargest = currentCount;
-
-			}
-			currentCount = 0;
-		}
-		return result;
-	}
 
 	public int[][] getSudokuGrid() {
-		return sudokuGrid;
+		return startingSudokuGrid;
 	}
 
+	
 	public void setSudokuGrid(int[][] sudokuGrid) {
-		this.sudokuGrid = sudokuGrid;
+		this.startingSudokuGrid = sudokuGrid;
 	}
 
+	
+	boolean isValueInCellValid(int row, int col) {
+		// TODO not used
+		return true;
+	}
+
+	
+	boolean isGuessForCellValid(int row, int col, int guess) {
+		// TODO not used
+		return true;
+	}
+	
 }

@@ -28,13 +28,62 @@ public class SudokuSolverAppTest {
 		app.setSudokuGrid(this.sudokuGrid);
 	}
 	
+	
+	@Test
+	public void testSquareColFromCol_0(){
+		int result = this.app.getSquareColFromCol(0);
+		assertTrue(result == 0);
+	}
+
+	@Test
+	public void testSquareColFromCol_1(){
+		int result = this.app.getSquareColFromCol(1);
+		assertTrue(result == 0);
+	}
+	
+	@Test
+	public void testSquareColFromCol_2(){
+		int result = this.app.getSquareColFromCol(2);
+		assertTrue(result == 0);
+	}
+
+	@Test
+	public void testSquareColFromCol_3(){
+		int result = this.app.getSquareColFromCol(3);
+		assertTrue(result == 1);
+	}
+	
+	@Test
+	public void testSquareRowFromRow_0(){
+		int result = this.app.getSquareRowFromRow(0);
+		assertTrue(result == 0);
+	}
+
+	@Test
+	public void testSquareRowFromRow_1(){
+		int result = this.app.getSquareRowFromRow(1);
+		assertTrue(result == 0);
+	}
+	
+	@Test
+	public void testSquareRowFromRow_2(){
+		int result = this.app.getSquareRowFromRow(2);
+		assertTrue(result == 0);
+	}
+
+	@Test
+	public void testSquareRowFromRow_3(){
+		int result = this.app.getSquareRowFromRow(3);
+		assertTrue(result == 1);
+	}
+	
 	@Test
 	public void testGetValuesInSquare00() {
 		Set<Integer> expectedValues = new HashSet<>();
 		expectedValues.add(6);
 		expectedValues.add(7);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInSquare(0, 0);
+		Set<Integer> values = this.app.getSingleValuesInSquare(0, 0);
 		assertTrue(values.containsAll(expectedValues));
 	}
 
@@ -45,7 +94,7 @@ public class SudokuSolverAppTest {
 		expectedValues.add(4);
 		expectedValues.add(6);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInSquare(1, 0);
+		Set<Integer> values = this.app.getSingleValuesInSquare(1, 0);
 		assertTrue(values.containsAll(expectedValues));
 	}
 
@@ -58,7 +107,7 @@ public class SudokuSolverAppTest {
 		expectedValues.add(8);
 		expectedValues.add(9);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInSquare(0, 1);
+		Set<Integer> values = this.app.getSingleValuesInSquare(0, 1);
 		assertTrue(values.containsAll(expectedValues));
 	}
 	
@@ -70,7 +119,7 @@ public class SudokuSolverAppTest {
 		expectedValues.add(6);
 		expectedValues.add(9);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInColumn(0);
+		Set<Integer> values = this.app.getValuesInColumnAsSet(0);
 		
 		assertTrue(values.containsAll(expectedValues));
 		assertFalse(values.contains(2));
@@ -89,7 +138,7 @@ public class SudokuSolverAppTest {
 		expectedValues.add(7);
 		expectedValues.add(8);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInColumn(8);
+		Set<Integer> values = this.app.getValuesInColumnAsSet(8);
 		
 		assertTrue(values.containsAll(expectedValues));
 		assertFalse(values.contains(1));
@@ -108,7 +157,7 @@ public class SudokuSolverAppTest {
 		expectedValues.add(7);
 		expectedValues.add(8);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInRow(0);
+		Set<Integer> values = this.app.getValuesInRowAsSet(0);
 		
 		assertTrue(values.containsAll(expectedValues));
 		assertFalse(values.contains(2));
@@ -127,7 +176,7 @@ public class SudokuSolverAppTest {
 		expectedValues.add(6);
 		expectedValues.add(9);
 		this.app.populateSolutionGridWithStartingPosition();
-		Set<Integer> values = this.app.getValuesInRow(8);
+		Set<Integer> values = this.app.getValuesInRowAsSet(8);
 		
 		assertTrue(values.containsAll(expectedValues));
 		assertFalse(values.contains(1));
