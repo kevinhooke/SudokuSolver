@@ -23,6 +23,9 @@ import java.util.logging.Logger;
  * a starting point with some cells populated
  * - the starting position probably has a minimum number of required populated values in order to 
  * reach a solution. Below this minimum, this approach will fail to find a solution.
+ * - this is my first attempt at writing a solving algorithm from scratch with no prior
+ * knowledge of typical approaches used to solve a constraint based problem such as Sudoku, 
+ * using brute force or backtracking algorithms etc.
  * 
  * @author kevinhooke
  *
@@ -35,6 +38,7 @@ public class SudokuSolverApp {
             Arrays.asList(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }));
 
     // example grid to solve
+    //1
     private int[][] startingSudokuGrid = { 
             { 0, 0, 0, 8, 1, 0, 6, 7, 0 }, 
             { 0, 0, 7, 4, 9, 0, 2, 0, 8 },
@@ -46,6 +50,19 @@ public class SudokuSolverApp {
             { 6, 0, 1, 0, 7, 4, 3, 0, 0 },
             { 0, 3, 4, 0, 6, 9, 0, 0, 0 }
     };
+
+    //easy
+//    private int[][] startingSudokuGrid = { 
+//            { 5, 0, 8, 4, 0, 0, 7, 0, 0 }, 
+//            { 0, 0, 0, 0, 0, 0, 8, 1, 9 },
+//            { 1, 0, 3, 0, 0, 6, 4, 0, 0 }, 
+//            { 8, 0, 0, 9, 1, 0, 0, 0, 3 }, 
+//            { 0, 0, 9, 0, 6, 0, 2, 0, 0 },
+//            { 6, 0, 0, 0, 8, 3, 0, 0, 4 }, 
+//            { 0, 0, 5, 6, 0, 0, 1, 0, 7 }, 
+//            { 9, 4, 6, 0, 0, 0, 0, 0, 0 },
+//            { 0, 0, 1, 0, 0, 9, 6, 0, 2 }
+//    };
 
     // list (rows) of list of list of integers
     // eg { {1, 2, 3}, {1, 2, 3}, {1, 2, 3}, ... },
